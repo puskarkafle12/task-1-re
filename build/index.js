@@ -1,20 +1,50 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-// Import the express in typescript file
-const express_1 = __importDefault(require("express"));
-// Initialize the express engine
-const app = (0, express_1.default)();
-// Take a port 3000 for running server.
-const port = 3000;
-// Handling '/' Request
-app.get('/', (_req, _res) => {
-    _res.send("TypeScript With Express");
+var express = require('express');
+var app = express();
+app.use(express.json());
+var Client = require('pg').Client;
+var bodyparser = require('body-parser');
+var client = new Client({
+    host: "localhost",
+    user: "postgres",
+    port: 5432,
+    password: "root",
+    database: "T1"
 });
-// Server setup
-app.listen(port, () => {
-    console.log(`TypeScript with Express
-		http://localhost:${port}/`);
+client.connect(function () {
+    console.log('database is connected');
+});
+app.post('/addstudent', (req, res) => {
+    const { name, email, password } = req.body;
+    const query = `
+	  INSERT INTO student (name, email,password)
+	  VALUES ($1, $2, $3)
+	`;
+    client.query(query, [name, email, password], (err, result) => {
+        if (err) {
+            res.send(err);
+        }
+        else {
+            res.json({ "message": "student added sucessfully" });
+        }
+    });
+});
+app.listen(3000, function () {
+    console.log('Server is running at https://localhost:3000');
+});
+app.get("/students", (req, res) => {
+    try {
+        var result = client.query('SELECT * FROM student');
+        const jsonResult = result.toJSON();
+        res.json(jsonResult);
+    }
+    catch (error) {
+        console.log(error);
+        res.sendStatus(400);
+        res.json({ "error": "bad request" });
+    }
+    finally {
+        client.end();
+    }
 });
