@@ -1,16 +1,21 @@
+let crypto =require('crypto')
 let jwt=require('jsonwebtoken')
 let express=require('express');
 const app=express()
 import { NextFunction, Request,Response } from "express";
 import { client } from "../database/database";
+import { decode } from "punycode";
 let bodyparser=require('body-parser')
 client.connect(()=>{
 console.log('student connected')
 })
 app.use(bodyparser.json());
+const secretKey = 'your-secret-key';
 
 export const addStudent= (req: Request, res: Response) => {
-	const { name, email, password } = req.body;
+	let { name, email, password } = req.body;
+  password = crypto.createHash('sha256').update(password).digest('hex');
+  console.log(password)
 	const query = `
 	  INSERT INTO student (name, email,password)
 	  VALUES ($1, $2, $3)
@@ -19,6 +24,7 @@ export const addStudent= (req: Request, res: Response) => {
 	  if (err) {
 		res.send(err);
 	  } else {
+      
 		res.json({"message":"student added sucessfully"});
 	  }
 	});
@@ -82,7 +88,7 @@ export const addStudent= (req: Request, res: Response) => {
           if (error) {
             console.log(error);
           } else {
-              console.log(`Deleted student with id ${id}`);
+              console.log(`Deleted student with id ${id}`+result);
               res.send({"message":`sucessfully deleted student id ${id}`})
           }
         });
@@ -99,10 +105,14 @@ export const addStudent= (req: Request, res: Response) => {
           }
         });
     }
-const secretKey = 'your-secret-key';
+
+
+
     export const login=(req: Request, res: Response) => {
-        const { email, password } = req.body; 
-        
+        let { email, password } = req.body; 
+        // console.log("login called")
+        password = crypto.createHash('sha256').update(password).digest('hex');
+        console.log(password)
         client.query('SELECT * FROM student WHERE email = $1 AND password = $2', [email, password], (err:Error, result:any) => {
           if (err) {
             res.status(500).send(err);
@@ -110,30 +120,26 @@ const secretKey = 'your-secret-key';
             res.status(401).send({ message: 'Username or password is incorrect' });
           } else {
             const token = jwt.sign({ email }, secretKey);
+            res.setHeader('Authorization', `${token}`);
+
+          
             res.json({ token });
           }
         });
       }
-      // function validateToken(req: Request, res: Response, next: NextFunction) {
-      //   // Extract token from header, query string, or request body
-      //   const token = req.headers['x-access-token'] || req.query.token || req.body.token;
-      
-      
-      //   const token = req.headers['x-access-token'] || req.headers['authorization'];
-      //   // If token doesn't exist, return error
-      //   if (!token) {
-      //     res.status(401).json({ message: 'No token provided' });
-      //   } else {
-      //     // If token exists, verify it
-      //     jwt.verify(token, secretKey, (err: any, decoded: any) => {
-      //       if (err) {
-      //         // If invalid, return error
-      //         res.status(401).json({ message: 'Invalid token' });
-      //       } else {
-      //         // If valid, save decoded token to request object and proceed to next middleware or route
-      //         // req.decoded = decoded;
-      //         next();
-      //       }
-      //     });
-      //   }
-      // }
+     export const authenticate= function authenticate(req: Request, res: Response, next: NextFunction) {
+        // Get the JWT from the header of the request
+        const token = req.cookies.jwt
+        // If there is no JWT, return an error
+        if (!token) {
+          return res.status(401).json({ error: 'No token provided' });
+        }
+        // Otherwise, verify the JWT and set the user on the request object
+        jwt.verify(token, secretKey, (err: any, decoded: any) => {
+          if (err) {
+            return res.status(401).json({ error: 'Invalid token' });
+          }
+          req.body.user = decoded;
+          next();
+        });
+      }
