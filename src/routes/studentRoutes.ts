@@ -2,10 +2,10 @@ import { addStudent, addSubject, authenticate, deleteStudent, getStudentById, ge
 
 var Router=require('express').Router()
 
-Router.post('/addstudent',addStudent)
-Router.get('/students',getstudents)
-Router.get('/students/:id',getStudentById)
-Router.delete('/student/:id',deleteStudent)
+Router.post('/addstudent',authenticate,addStudent)
+Router.get('/students',authenticate,getstudents)
+Router.get('/students/:id',authenticate,getStudentById)
+Router.delete('/student/:id',authenticate,deleteStudent)
 Router.post('/login',login)
 
 module.exports =Router
