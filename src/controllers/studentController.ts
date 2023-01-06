@@ -129,8 +129,8 @@ export const addStudent= (req: Request, res: Response) => {
       }
      export const authenticate= function authenticate(req: Request, res: Response, next: NextFunction) {
         // Get the JWT from the header of the request
-        const token = req.cookies.jwt
-        // If there is no JWT, return an error
+        const token =  req.headers['authorization']
+        console.log(token)
         if (!token) {
           return res.status(401).json({ error: 'No token provided' });
         }
