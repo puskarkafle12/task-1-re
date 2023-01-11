@@ -126,7 +126,7 @@ export const addStudent= (req: Request, res: Response) => {
             res.json({ token });
           }
         });
-      }
+      }//
      export const authenticate= function authenticate(req: Request, res: Response, next: NextFunction) {
         // Get the JWT from the header of the request
         const token =  req.headers['authorization']
