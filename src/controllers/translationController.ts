@@ -46,35 +46,47 @@ client.query("SELECT update_item_translations($1, $2)", [code, translations], (e
     if (error) {
         console.log(error);
     } else {
-        res.send("sucess "+JSON.stringify(result, null, 4));
+        res.send("sucess "+JSON.stringify(result.rows, null, 4));
     }
  
 });
 
   
 }
-// export const updateItem = async (req: Request, res: Response) =>{
-//     const {itemcode,t_data} = req.body
+export const addTranslation = async (req: Request, res: Response) =>{
+ 
+  let {code,translations} = req.body
+   translations = JSON.stringify(translations);
+   
 
-//       const result = await Sequlize.query("SELECT * from  insert_items(:itemcode,:t_data)", {
-//         replacements: { itemcode: itemcode,t_data:t_data },
-//         type: Sequlize.QueryTypes.SELECT
-//     }
-//     )
-//     res.send(result)
-    
-// }
-// export const getItemById = async (req: Request, res: Response) =>{
-//     const id = parseInt(req.params.id);
-//    const [results, metadata] = await Sequlize.query("SELECT  * from getitembyid(:id)",{
-//         replacements: { id : id }
-//     })
-//     res.send(results)
+
+   client.query("SELECT public.add_translation_to_item($1, $2)", [code, translations], (error: Error, result: any) => {
+    if (error) {
+        console.log(error);
+    } else {
+        res.json("sucess"+result.rows);
+    }
+});
+
   
- 
-// }
-// export const getItems = async (req: Request, res: Response) =>{
-//    const [results, metadata] = await Sequlize.query("SELECT  * from getitems()");
-//     res.send(results)
- 
-// }
+}
+export const getTranslationsByLang = async (req: Request, res: Response) =>{
+    try {
+      const lang = req.query.language;
+      const result = await client.query("SELECT * FROM get_items_translation($1)", [lang]);
+        res.json(result.rows);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({error});
+    }
+};
+export const getItemById = async (req: Request, res: Response) =>{
+  try {
+      const id = req.params.id;
+      const result = await client.query("SELECT * FROM get_item_by_id($1)", [id]);
+      res.json(result.rows);
+  } catch (error) {
+      console.log(error);
+      res.status(500).json({error});
+  }
+};

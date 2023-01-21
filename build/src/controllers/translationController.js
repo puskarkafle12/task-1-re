@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateItem = exports.addItem = void 0;
+exports.getItemById = exports.getTranslationsByLang = exports.addTranslation = exports.updateItem = exports.addItem = void 0;
 let express = require('express');
 const app = express();
 const database_1 = require("../database/database");
@@ -50,29 +50,46 @@ const updateItem = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             console.log(error);
         }
         else {
-            res.send("sucess " + JSON.stringify(result, null, 4));
+            res.send("sucess " + JSON.stringify(result.rows, null, 4));
         }
     });
 });
 exports.updateItem = updateItem;
-// export const updateItem = async (req: Request, res: Response) =>{
-//     const {itemcode,t_data} = req.body
-//       const result = await Sequlize.query("SELECT * from  insert_items(:itemcode,:t_data)", {
-//         replacements: { itemcode: itemcode,t_data:t_data },
-//         type: Sequlize.QueryTypes.SELECT
-//     }
-//     )
-//     res.send(result)
-// }
-// export const getItemById = async (req: Request, res: Response) =>{
-//     const id = parseInt(req.params.id);
-//    const [results, metadata] = await Sequlize.query("SELECT  * from getitembyid(:id)",{
-//         replacements: { id : id }
-//     })
-//     res.send(results)
-// }
-// export const getItems = async (req: Request, res: Response) =>{
-//    const [results, metadata] = await Sequlize.query("SELECT  * from getitems()");
-//     res.send(results)
-// }
+const addTranslation = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { code, translations } = req.body;
+    translations = JSON.stringify(translations);
+    database_1.client.query("SELECT public.add_translation_to_item($1, $2)", [code, translations], (error, result) => {
+        if (error) {
+            console.log(error);
+        }
+        else {
+            res.json("sucess" + result.rows);
+        }
+    });
+});
+exports.addTranslation = addTranslation;
+const getTranslationsByLang = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const lang = req.query.language;
+        const result = yield database_1.client.query("SELECT * FROM get_items_translation($1)", [lang]);
+        res.json(result.rows);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ error });
+    }
+});
+exports.getTranslationsByLang = getTranslationsByLang;
+const getItemById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const id = req.params.id;
+        const result = yield database_1.client.query("SELECT * FROM get_item_by_id($1)", [id]);
+        res.json(result.rows);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ error });
+    }
+});
+exports.getItemById = getItemById;
 //# sourceMappingURL=translationController.js.map

@@ -1,9 +1,10 @@
 "use strict";
-const { addItem, getItemById, getItems, updateItem } = require('../controllers/translationController');
+const { addTranslation, getItemById, getTranslationsByLang, addItem, updateItem } = require('../controllers/translationController');
 const Router = require('express').Router();
-Router.post('/additem', addItem);
-// Router.get('/getitembyid/:id',getItemById)
-// Router.get('/getitems/',getItems)
-Router.put('/updateitem', updateItem);
+Router.get('/items', getTranslationsByLang);
+Router.get('/items/:id', getItemById);
+Router.put('/items', updateItem);
+Router.post('/items', addTranslation);
+Router.post('/additem/', addItem);
 module.exports = Router;
 //# sourceMappingURL=itemRoutes.js.map
