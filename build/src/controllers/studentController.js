@@ -14,12 +14,13 @@ app.use(bodyparser.json());
 const secretKey = 'your-secret-key';
 const addStudent = (req, res) => {
     let { name, email, password } = req.body;
-    const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+    password = crypto.createHash('sha256').update(password).digest('hex');
+    console.log(password);
     const query = `
 	  INSERT INTO student (name, email,password)
 	  VALUES ($1, $2, $3)
 	`;
-    database_1.client.query(query, [name, email, passwordHash], (err, result) => {
+    database_1.client.query(query, [name, email, password], (err, result) => {
         if (err) {
             res.send(err);
         }
@@ -90,7 +91,7 @@ const deleteStudent = (req, res) => {
             console.log(error);
         }
         else {
-            console.log(`Deleted student with id ${id}` + result[0]);
+            console.log(`Deleted student with id ${id}` + result);
             res.send({ "message": `sucessfully deleted student id ${id}` });
         }
     });
@@ -111,7 +112,9 @@ const deleteSubject = (req, res) => {
 exports.deleteSubject = deleteSubject;
 const login = (req, res) => {
     let { email, password } = req.body;
+    // console.log("login called")
     password = crypto.createHash('sha256').update(password).digest('hex');
+    console.log(password);
     database_1.client.query('SELECT * FROM student WHERE email = $1 AND password = $2', [email, password], (err, result) => {
         if (err) {
             res.status(500).send(err);
@@ -121,16 +124,16 @@ const login = (req, res) => {
         }
         else {
             const token = jwt.sign({ email }, secretKey);
-            res.cookie('jwt', token, { httpOnly: true, maxAge: 86400 });
+            res.setHeader('Authorization', `${token}`);
             res.json({ token });
         }
     });
-};
+}; //
 exports.login = login;
 const authenticate = function authenticate(req, res, next) {
     // Get the JWT from the header of the request
-    const token = req.cookies.jwt;
-    // If there is no JWT, return an error
+    const token = req.headers['authorization'];
+    console.log(token);
     if (!token) {
         return res.status(401).json({ error: 'No token provided' });
     }
