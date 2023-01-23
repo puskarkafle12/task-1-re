@@ -37,43 +37,45 @@ export const addItem = async (req: Request, res: Response) =>{
 }
 export const updateItem = async (req: Request, res: Response) =>{
  
-  let {code,translations} = req.body
-   translations = JSON.stringify(translations);
+  let {code, trans} = req.body
+   trans = JSON.stringify(trans);
+   console.log("SELECT update_item_translations($1, $2);", [code, trans]);
    
-
-
-client.query("SELECT update_item_translations($1, $2)", [code, translations], (error:Error, result:any) => {
+  //  SELECT update_item_translations('item6', '{"translations":[{"text":"hen","language":"EN"},{"text":"kukhura","language":"np"}]}');
+  
+client.query("SELECT update_item_translations($1, $2);", [code, trans], (error:Error, result:any) => {
     if (error) {
         console.log(error);
     } else {
-        res.send("sucess "+JSON.stringify(result.rows, null, 4));
+        res.send("sucess :"+JSON.stringify(result.rows, null, 4));
     }
  
 });
 
   
 }
-export const addTranslation = async (req: Request, res: Response) =>{
+// export const addTranslation = async (req: Request, res: Response) =>{
  
-  let {code,translations} = req.body
-   translations = JSON.stringify(translations);
+//   let {code,translations} = req.body
+//    translations = JSON.stringify(translations);
    
 
 
-   client.query("SELECT public.add_translation_to_item($1, $2)", [code, translations], (error: Error, result: any) => {
-    if (error) {
-        console.log(error);
-    } else {
-        res.json("sucess"+result.rows);
-    }
-});
+//    client.query("SELECT public.add_translation_to_item($1, $2)", [code, translations], (error: Error, result: any) => {
+//     if (error) {
+//         console.log(error);
+//     } else {
+//         res.json("sucess"+result.rows);
+//     }
+// });
 
   
-}
+// }
 export const getTranslationsByLang = async (req: Request, res: Response) =>{
     try {
       const lang = req.query.language;
-      const result = await client.query("SELECT * FROM get_items_translation($1)", [lang]);
+      const searchParameter = req.query.search;
+      const result = await client.query("SELECT * FROM get_items_translation($1,$2)", [lang,searchParameter]);
         res.json(result.rows);
     } catch (error) {
         console.log(error);

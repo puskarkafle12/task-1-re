@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getItemById = exports.getTranslationsByLang = exports.addTranslation = exports.updateItem = exports.addItem = void 0;
+exports.getItemById = exports.getTranslationsByLang = exports.updateItem = exports.addItem = void 0;
 let express = require('express');
 const app = express();
 const database_1 = require("../database/database");
@@ -43,35 +43,36 @@ const addItem = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.addItem = addItem;
 const updateItem = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { code, translations } = req.body;
-    translations = JSON.stringify(translations);
-    database_1.client.query("SELECT update_item_translations($1, $2)", [code, translations], (error, result) => {
+    let { code, trans } = req.body;
+    trans = JSON.stringify(trans);
+    console.log("SELECT update_item_translations($1, $2);", [code, trans]);
+    //  SELECT update_item_translations('item6', '{"translations":[{"text":"hen","language":"EN"},{"text":"kukhura","language":"np"}]}');
+    database_1.client.query("SELECT update_item_translations($1, $2);", [code, trans], (error, result) => {
         if (error) {
             console.log(error);
         }
         else {
-            res.send("sucess " + JSON.stringify(result.rows, null, 4));
+            res.send("sucess :" + JSON.stringify(result.rows, null, 4));
         }
     });
 });
 exports.updateItem = updateItem;
-const addTranslation = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { code, translations } = req.body;
-    translations = JSON.stringify(translations);
-    database_1.client.query("SELECT public.add_translation_to_item($1, $2)", [code, translations], (error, result) => {
-        if (error) {
-            console.log(error);
-        }
-        else {
-            res.json("sucess" + result.rows);
-        }
-    });
-});
-exports.addTranslation = addTranslation;
+// export const addTranslation = async (req: Request, res: Response) =>{
+//   let {code,translations} = req.body
+//    translations = JSON.stringify(translations);
+//    client.query("SELECT public.add_translation_to_item($1, $2)", [code, translations], (error: Error, result: any) => {
+//     if (error) {
+//         console.log(error);
+//     } else {
+//         res.json("sucess"+result.rows);
+//     }
+// });
+// }
 const getTranslationsByLang = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const lang = req.query.language;
-        const result = yield database_1.client.query("SELECT * FROM get_items_translation($1)", [lang]);
+        const searchParameter = req.query.search;
+        const result = yield database_1.client.query("SELECT * FROM get_items_translation($1,$2)", [lang, searchParameter]);
         res.json(result.rows);
     }
     catch (error) {
