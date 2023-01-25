@@ -1,4 +1,5 @@
 let express = require('express')
+const converter = require('json-2-csv');
 const app = express()
 import { Request, Response } from 'express';
 import { client } from '../database/database';
@@ -92,3 +93,73 @@ export const getItemById = async (req: Request, res: Response) =>{
       res.status(500).json({error});
   }
 };
+
+export const addSales = async (req: Request, res: Response) =>{
+  var result=''
+  const {customerid, itemid, quantity} = req.body
+
+  client.query("SELECT  from public.add_item_sale($1, $2, $5);", [customerid, itemid, quantity], (error:Error, result:any) => {
+      if (error) {
+        console.log(error);
+        result+=`{"message":${error}}`
+      } else {
+
+          result= '{"message":`items sales added sucessfully`}'
+      }
+    });
+   res.json(result)
+  
+}
+
+
+
+const json2csv = require('json2csv').parse;
+
+    export const salesReport = async (req: Request, res: Response) => {
+      try {
+        const results = await client.query("select * from public.salesreport()");
+
+        // Convert the JSON data to CSV
+        const csv = json2csv(results.rows);
+
+        // Set the response headers to force the download
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="sales-report.csv"');
+
+        // Send the CSV as the response
+        res.send(csv);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ error });
+      }
+    };
+
+
+  
+
+    export const addItemTranslation = async (req: Request, res: Response) => {
+      const XLSX = require('xlsx');
+
+
+const workbook = XLSX.readFile('items.xlsx');
+const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+jsonData.forEach((row:any) => {
+    const query = `INSERT INTO items (name, description, price) VALUES ('${row.name}', '${row.description}', ${row.price});`;
+
+    client.query(query, (err:Error, res:Response) => {
+        if (err) {
+            console.log(err.stack);
+        } else {
+            console.log(res.rows[0]);
+        }
+    });
+});
+
+
+
+    };
+
+
+  
