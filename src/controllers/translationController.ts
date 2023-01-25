@@ -1,8 +1,11 @@
+import * as XLSX from 'xlsx';
 let express = require('express')
 const converter = require('json-2-csv');
 const app = express()
 import { Request, Response } from 'express';
 import { client } from '../database/database';
+import path from 'path';
+import { text } from 'body-parser';
 let bodyparser = require('body-parser')
 const crypto = require('crypto');
 app.use(bodyparser.json());
@@ -133,33 +136,52 @@ const json2csv = require('json2csv').parse;
         res.status(500).json({ error });
       }
     };
-
-
+export const addItemFromxsls = async (req: Request, res: Response) =>{
   
 
-    export const addItemTranslation = async (req: Request, res: Response) => {
-      const XLSX = require('xlsx');
+const filePath = path.resolve(__dirname, '../../Book1.xlsx');
+const workbook = XLSX.readFile(filePath);
 
+const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-const workbook = XLSX.readFile('items.xlsx');
-const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-jsonData.forEach((row:any) => {
-    const query = `INSERT INTO items (name, description, price) VALUES ('${row.name}', '${row.description}', ${row.price});`;
-
-    client.query(query, (err:Error, res:Response) => {
-        if (err) {
-            console.log(err.stack);
-        } else {
-            console.log(res.rows[0]);
-        }
+const json = XLSX.utils.sheet_to_json(sheet);
+console.log(json)
+  let row:any
+  var response='';
+for ( row of json) {
+  function generateId(length :any) {
+    return crypto.randomBytes(Math.ceil(length / 2))
+      .toString('hex') // convert to hexadecimal format
+      .slice(0, length);   // return required number of characters
+  }
+  
+  const translationcode = (generateId(8));
+  const {name,language,code,price} = row
+  const translationtext=name;
+  console.log(translationtext,language,code,price);
+    client.query("SELECT public.insert_translation($1, $2, $3)", [translationcode,translationtext ,language], (error:Error, result:any) => {
+      if (error) {
+        console.log(error);
+      } else {
+         
+          // result= '{"message":`sucessfully addedtranslation ${code}`}'
+      }
     });
-});
+    client.query("SELECT public.insert_item($1, $2,$3)", [code, translationcode,price], (error:Error, result:any) => {
+      if (error) {
+        console.log(error);
+      }
+      else {
+         
+           response+='sucess\n'
+      }
+    });
+    
+}
+res.json({"message":response})
 
-
-
-    };
+      
+    }
 
 
   
